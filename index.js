@@ -1,12 +1,13 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+
 import mongoose from 'mongoose';
-import { validationResult } from 'express-validator';
 
-import { registerValidation } from './validations/auth.js';
+import { loginValidation, postCreateValidation, registerValidation } from './validations.js';
 
-import UserModel from './models/User.js';
+import checkAuth from './utils/checkAuth.js';
+
+import * as UserController from './controllers/UserController.js';
+import * as PostController from './controllers/PostController.js';
 
 mongoose
 // именно к blog !
@@ -18,124 +19,16 @@ const app = express();
 
 app.use(express.json());
 
-app.post('/auth/login', async (req, res) => {
-    try{
-        const user = await UserModel.findOne({ email : req.body.email });
+app.get('/posts', PostController.getAll);
+// app.get('/posts/:id', PostController.getOne);
+app.post('/posts', checkAuth, postCreateValidation, PostController.create);
+// app.delete('/posts', PostController.remove);
+// app.patch('/posts', PostController.update);
 
-        if (!user) {
-            return res.status(404).json({
-                message : 'Пользователь не найден :(' // без уточнений для безопасности
-            });
-        }
-
-        const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
-        // сравнение тела запроса и то, что есть в базе
-
-        if (!isValidPass){
-            return res.status(400).json({
-                message : 'Неверный логин или пароль',
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                _id: user._id,
-
-            }, 
-            'secret321',
-            {
-                expiresIn : '30d',
-            },
-        );
-
-        const {passwordHash, ...userData } = user._doc;
-
-        res.json({
-            ...userData,
-            token,
-        });
-    } catch {
-        console.log(err);
-        res.status(500).json({
-            message : "Не удалось авторизоваться :(",
-        });
-    }
-});
-
-
-
-
-
-// app.get('/', (req, res) => { 
-//     res.send('Hello Angelina, check2!');
-// });
-
-app.post('/auth/register', registerValidation, async (req, res) => {
-    try{
-        const errors = validationResult(req);
-        if (!errors.isEmpty()){
-            return res.status(400).json(errors.array());
-        }
-    
-        const password = req.body.password;
-        const salt = await bcrypt.genSalt(10); // salt - алгоритм шифрования
-        const hash = await bcrypt.hash(password, salt); // многие компании использую 
-    
-        const doc = new UserModel({
-            email: req.body.email,
-            fullName: req.body.fullName,
-            avatarUrl: req.body.avatarUrl,
-            passwordHash : hash,// фронтенд передаст пароль в открытую, но далее бэкенд шифрует
-        });
-    
-        const user = await doc.save();
-
-        const token = jwt.sign(
-            {
-                _id: user._id,
-
-            }, 
-            'secret321',
-            {
-                expiresIn : '30d',
-            },
-        );
-
-    const {passwordHash, ...userData } = user._doc;
-
-
-    res.json({
-        ...userData,
-        token,
-    });
-
-    } catch(err){
-        console.log(err);
-        res.status(500).json({
-            message : "Не удалось зарегистрироваться",
-        });
-    }
-});
-
-// app.post('auth/login', (req, res) => {
-//     console.log(req.body);
-
-
-//     if (req.body.req === "test@test.ru") {
-//         const token = jwt.sign({
-//             email : req.body.email,
-//             fullName : 'Coraline Johns',
-//         }, 
-//         'secret321',
-//         );
-//     };
-//     res.json({
-//         success : true, 
-//         token,
-
-//     });
-
-// });
+// app.get('/posts/create', checkAuth, PostController.getMe);
+// app.get('/posts/create', checkAuth, PostController.getMe);
+// app.get('/posts/create', checkAuth, PostController.getMe);
+// app.get('/posts/create', checkAuth, PostController.getMe);
 
 app.listen(4444, (err) => {
     if (err) {
