@@ -35,19 +35,19 @@ export const Home = () => {
           ))}
         </Grid>
         <Grid xs={4} item>
-          <TagsBlock items={['react', 'typescript', 'заметки']} isLoading={false} />
+          <TagsBlock items={['react', 'typescript', 'студентики', 'дедлайн']} isLoading={false} />
           <CommentsBlock
             items={[
               {
                 user: {
-                  fullName: 'Вася Пупкин',
+                  fullName: 'Коралина Джонс',
                   avatarUrl: 'https://mui.com/static/images/avatar/1.jpg',
                 },
                 text: 'Это тестовый комментарий',
               },
               {
                 user: {
-                  fullName: 'Иван Иванов',
+                  fullName: 'Игорь Игоревич',
                   avatarUrl: 'https://mui.com/static/images/avatar/2.jpg',
                 },
                 text: 'When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top',
